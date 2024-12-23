@@ -1,0 +1,14 @@
+{
+    # Globally set the email for ACME (Let's Encrypt)
+    email {env.CADDY_EMAIL}
+}
+
+{env.CADDY_DOMAIN} {
+    # Reverse proxy all traffic to the internal AppFlowy container
+    reverse_proxy appflowy:8080
+
+    # (Optional) Additional config, headers, etc.
+    # e.g. to pass WebSocket headers explicitly
+    # header_up Host {host}
+    # header_up X-Real-IP {remote_host}
+}

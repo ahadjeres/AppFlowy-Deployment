@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: appflowy-db
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${APPFLOWY_DB_USER}
+      POSTGRES_PASSWORD: ${APPFLOWY_DB_PASS}
+      POSTGRES_DB: ${APPFLOWY_DB_NAME}
+    volumes:
+      - appflowy_db_data:/var/lib/postgresql/data
+    networks:
+      - appflowy_net
+
+  appflowy:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    container_name: appflowy-web
+    depends_on:
+      - postgres
+    restart: always
+    env_file:
+      - .env
+    environment:
+      APPFLOWY_BACKEND__DATABASE__URL: "postgres://${APPFLOWY_DB_USER}:${APPFLOWY_DB_PASS}@postgres:5432/${APPFLOWY_DB_NAME}"
+      APPFLOWY_BACKEND__WEB_SOCKET__EXTERNAL_URL: ${APPFLOWY_BACKEND__WEB_SOCKET__EXTERNAL_URL}
+      APPFLOWY_BACKEND__SECRET_KEY: ${APPFLOWY_BACKEND__SECRET_KEY}
+    expose:
+      - "8080"
+    networks:
+      - appflowy_net
+
+  caddy:
+    image: caddy:2
+    container_name: caddy
+    depends_on:
+      - appflowy
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:Z
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - appflowy_net
+
+  db_backup:
+    build:
+      context: ./backup
+      dockerfile: Dockerfile
+    container_name: appflowy-db-backup
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Provide the same DB URL to pg_dump
+      APPFLOWY_BACKEND__DATABASE__URL: "postgres://${APPFLOWY_DB_USER}:${APPFLOWY_DB_PASS}@postgres:5432/${APPFLOWY_DB_NAME}"
+      # AWS creds + region + S3 bucket
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+    networks:
+      - appflowy_net
+
+volumes:
+  appflowy_db_data:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
+
+networks:
+  appflowy_net:
+    driver: bridge
