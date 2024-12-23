@@ -1,0 +1,34 @@
+# ---------------------------------------------------
+# Ignore real .env files (only keep .env.example)
+# ---------------------------------------------------
+.env
+*.env
+
+# ---------------------------------------------------
+# AppFlowy Frontend (Flutter) build artifacts
+# ---------------------------------------------------
+appflowy/frontend/flowy_infra/build/
+appflowy/frontend/flowy_infra/.dart_tool/
+appflowy/frontend/flowy_infra/.packages
+appflowy/frontend/flowy_infra/pubspec.lock
+
+# ---------------------------------------------------
+# AppFlowy Backend (Rust) build artifacts
+# ---------------------------------------------------
+appflowy/backend/target/
+
+# ---------------------------------------------------
+# Local Backup Files (if any are generated or stored)
+# ---------------------------------------------------
+*.sql
+/tmp/
+
+# ---------------------------------------------------
+# OS- and Editor-Specific Files
+# ---------------------------------------------------
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
